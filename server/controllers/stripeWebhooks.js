@@ -103,7 +103,14 @@ import Stripe from "stripe";
 import Booking from "../models/Booking.js";
 
 export const stripeWebhooks = async (req, res) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // ✅ SAFE
+
+  console.log("🔥 Stripe webhook received");
+
+  // ✅ Stripe is created AFTER dotenv has loaded
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+
+
 
   const sig = req.headers["stripe-signature"];
   let event;
@@ -114,30 +121,32 @@ export const stripeWebhooks = async (req, res) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+
   } catch (err) {
     console.error("Webhook signature error:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  
+  console.log("🔥 Event type:", event.type); // 👈 HERE
+
   try {
-    if (event.type === "payment_intent.succeeded") {
-      const paymentIntent = event.data.object;
+    // 🚨 ALSO FIX THIS EVENT TYPE
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const bookingId = session.metadata?.bookingId;
 
-      const sessions = await stripe.checkout.sessions.list({
-        payment_intent: paymentIntent.id,
-      });
+      if (bookingId) {
+        await Booking.findByIdAndUpdate(bookingId, {
+          isPaid: true,
+          paymentLink: "",
+        });
 
-      const session = sessions.data[0];
-      if (!session) return res.json({ received: true });
-
-      const { bookingId } = session.metadata;
-
-      await Booking.findByIdAndUpdate(bookingId, {
-        isPaid: true,
-        paymentLink: "",
-      });
-
-      console.log("✅ Booking paid:", bookingId);
+        console.log("✅ Booking marked as paid:", bookingId);
+      }
+       else {
+        console.log("❌ bookingId missing in metadata");
+      }
     }
 
     res.json({ received: true });

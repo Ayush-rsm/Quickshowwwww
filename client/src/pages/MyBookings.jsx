@@ -6,22 +6,23 @@ import timeFormat from '../lib/timeFormat'
 import { dateFormat } from '../lib/dateFormat'
 import axios from 'axios'
 import { useAppContext } from '../context/AppContext'
+import { Link } from 'react-router-dom'
 
 const MyBookings = () => {
   const currency = import.meta.env.VITE_CURRENCY
 
-   const {  getToken, user, image_base_url } = useAppContext()
+  const { getToken, user, image_base_url } = useAppContext()
 
   const [bookings, setBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   const getMyBookings = async () => {
     try {
-      const {data} = await axios.get("/api/user/bookings", {
-        headers: { Authorization: `Bearer ${await getToken()}`}
+      const { data } = await axios.get("/api/user/bookings", {
+        headers: { Authorization: `Bearer ${await getToken()}` }
       })
 
-      if(data.success){
+      if (data.success) {
         setBookings(data.bookings)
       }
     } catch (error) {
@@ -31,7 +32,7 @@ const MyBookings = () => {
   }
 
   useEffect(() => {
-    if(user){
+    if (user) {
       getMyBookings();
     }
   }, [user])
@@ -70,11 +71,20 @@ const MyBookings = () => {
                 <p className='text-2xl font-semibold mb-3'>
                   {currency}{item.amount}
                 </p>
-                {!item.isPaid && (
-                  <button className='bg-primary px-4 py-1.5 mb-3 text-sm rounded-full font-medium cursor-pointer'>
+                {item.isPaid ? (
+                  <span className="bg-green-500/20 text-green-400 px-4 py-1.5 mb-3 text-sm rounded-full font-medium">
+                    Paid
+                  </span>
+                ) : (
+                  <Link
+                    to={item.paymentLink}
+                    className="bg-primary px-4 py-1.5 mb-3 text-sm rounded-full font-medium"
+                  >
                     Pay Now
-                  </button>
+                  </Link>
                 )}
+
+
               </div>
 
               <div className='text-sm'>
