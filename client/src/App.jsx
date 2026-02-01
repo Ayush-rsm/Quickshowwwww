@@ -18,9 +18,22 @@ import Dashboard from "./pages/admin/Dashboard";
 import AddShows from "./pages/admin/AddShows";
 import ListShows from "./pages/admin/ListShows";
 import ListBookings from "./pages/admin/ListBookings";
+import { useAppContext } from "./context/AppContext";
+import { SignIn } from "@clerk/clerk-react";
+
+import { Navigate } from "react-router-dom";
+import Loading from "./components/Loading";
+
 
 const App = () => {
   const isAdminRoute = useLocation().pathname.startsWith("/admin");
+
+  const { user, isAdmin, adminLoading } = useAppContext();
+
+  console.log("FRONTEND USER:", user?.id);
+console.log("FRONTEND IS ADMIN:", isAdmin);
+console.log("ADMIN LOADING:", adminLoading);
+
 
   return (
     <>
@@ -36,9 +49,27 @@ const App = () => {
         <Route path="/movies/:id/:date" element={<SeatLayout />} />
         <Route path="/favourite" element={<Favourite />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/loading/:nextUrl" element={<Loading />} />
 
         {/* ADMIN ROUTES (NESTED) */}
-        <Route path="/admin" element={<Layout />}>
+        <Route
+          path="/admin/*"
+          element={
+            !user ? (
+              <div className="min-h-screen flex justify-center items-center">
+                <SignIn fallbackRedirectUrl="/admin" />
+              </div>
+            ) : adminLoading ? (
+              <div className="min-h-screen flex justify-center items-center">
+                Checking permissions...
+              </div>
+            ) : !isAdmin ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Layout />
+            )
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="add-shows" element={<AddShows />} />
           <Route path="list-shows" element={<ListShows />} />
@@ -52,3 +83,4 @@ const App = () => {
 };
 
 export default App;
+

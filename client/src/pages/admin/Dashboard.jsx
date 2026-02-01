@@ -11,8 +11,13 @@ import { dummyBookingData } from "../../assets/assets";
 import Loading from "../../components/Loading";
 import BlurCircle from "../../components/BlurCircle";
 import { dateFormat } from "../../lib/dateFormat";
+import { useAppContext } from "../../context/AppContext";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const Dashboard = () => {
+
+  const { getToken, user, image_base_url } = useAppContext()
   const currency = import.meta.env.VITE_CURRENCY;
 
   // ✅ GUARANTEED STATE SHAPE
@@ -49,21 +54,37 @@ const Dashboard = () => {
     },
   ];
 
-  // ✅ NORMALIZE API / DUMMY DATA
   const fetchDashboardData = async () => {
-    setDashboardData({
-      totalBookings: dummyBookingData.totalBookings || 0,
-      totalRevenue: dummyBookingData.totalRevenue || 0,
-      activeShows: dummyBookingData.activeShows || [],
-      totalUser: dummyBookingData.totalUser || 0,
-    });
+    try {
 
-    setLoading(false);
+      const { data } = await axios.get(
+        "/api/admin/dashboard",
+        {
+          headers: {
+            Authorization: `Bearer ${await getToken()}`
+          }
+        }
+      );
+
+            console.log("Dashboard data:", data.dashboardData);
+
+      if (data.success) {
+        setDashboardData(data.dashboardData);
+        setLoading(false);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error fetching dashboard data");
+    }
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
 
   // ✅ LOADING STATE FIRST
   if (loading) return <Loading />;
@@ -104,7 +125,7 @@ const Dashboard = () => {
               className="w-55 rounded-lg overflow-hidden h-full pb-3 bg-primary/10 border border-primary/20 hover:-translate-y-1 transition duration-300"
             >
               <img
-                src={show.movie.poster_path}
+                src={image_base_url + show.movie.poster_path}
                 alt=""
                 className="h-60 w-full object-cover"
               />
@@ -123,7 +144,7 @@ const Dashboard = () => {
                   {show.movie.vote_average?.toFixed(1)}
                 </p>
               </div>
-               <p className="px-2 pt-2 text-sm text-gray-500">
+              <p className="px-2 pt-2 text-sm text-gray-500">
                 {dateFormat(show.showDateTime)}
               </p>
             </div>
