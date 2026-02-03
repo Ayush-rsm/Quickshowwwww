@@ -22,7 +22,7 @@ const checkSeatsAvailability = async (showId, selectedSeats) => {
   }
 };
 
- 
+
 export const createBooking = async (req, res) => {
   try {
     const { userId } = req.auth();
@@ -47,14 +47,14 @@ export const createBooking = async (req, res) => {
 
     // Create a new booking
     const booking = await Booking.create({
-        user: userId,
-        show: showId,
-        amount: showData.showPrice * selectedSeats.length,
-        bookedSeats: selectedSeats
+      user: userId,
+      show: showId,
+      amount: showData.showPrice * selectedSeats.length,
+      bookedSeats: selectedSeats
     })
 
     selectedSeats.map((seat) => {
-        showData.occupiedSeats[seat] = userId;
+      showData.occupiedSeats[seat] = userId;
     })
 
     showData.markModified('occupiedSeats');
@@ -77,8 +77,8 @@ export const createBooking = async (req, res) => {
     }]
 
     const session = await stripeInstance.checkout.sessions.create({
-      success_url: `${origin}/loading/my-bookings`, 
-      cancel_url:`${origin}/my-bookings`,
+      success_url: `${origin}/loading/my-bookings`,
+      cancel_url: `${origin}/my-bookings`,
       line_items: line_items,
       mode: 'payment',
       metadata: {
@@ -91,21 +91,26 @@ export const createBooking = async (req, res) => {
     booking.paymentLink = session.url
     await booking.save()
 
-    // Run Inngest Sheduler Function to check payment status after 10 minutes
-    await inngest.send({
-      name: "app/checkpayment",
-      data: {
-        bookingId: booking._id.toString()
-      }
-    })
+    console.log(
+      "INNGEST_EVENT_KEY (first 12 chars):",
+      process.env.INNGEST_EVENT_KEY?.slice(0, 12)
+    );
 
-    
+    // // Run Inngest Sheduler Function to check payment status after 10 minutes
+    // await inngest.send({
+    //   name: "app/checkpayment",
+    //   data: {
+    //     bookingId: booking._id.toString()
+    //   }
+    // })
 
-    res.json({success: true, url: session.url})
+
+
+    res.json({ success: true, url: session.url })
 
   } catch (error) {
     console.log(error.message);
-    res.json({success: false, message: error.message})
+    res.json({ success: false, message: error.message })
   }
 }
 
@@ -122,5 +127,7 @@ export const getOccupiedSeats = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+
 
 export default { createBooking, getOccupiedSeats };

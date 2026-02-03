@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-dotenv.config({ path: "./.env" })
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 
@@ -16,6 +17,9 @@ import stripeRouter from "./routes/stripeRoutes.js";
 
 
 dotenv.config();
+
+console.log("STRIPE KEY:", process.env.STRIPE_SECRET_KEY);
+
 
 const app = express();
 const port = process.env.PORT || 3000;
