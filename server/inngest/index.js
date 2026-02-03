@@ -1,20 +1,175 @@
+// import { Inngest } from "inngest";
+// import Show from "../models/Show.js";
+// import Booking from "../models/Booking.js";
+// import User from "../models/User.js";
+// import sendEmail from "../config/nodeMailer.js";
+
+
+
+
+// // Create a client to send and receive events
+// export const inngest = new Inngest({ 
+//   id: "my-app",
+
+//   eventKey: process.env.INNGEST_EVENT_KEY,});
+
+
+// //ingest function to user data to a database
+
+// const syncUserCreation = inngest.createFunction(
+//   { id: "sync-user-from-clerk" },
+//   { event: "clerk/user.created" },
+//   async ({ event }) => {
+//     const { id, first_name, last_name, email_addresses, image_url } = event.data;
+
+//     const userData = {
+//       _id: id, // Clerk user id
+//       email: email_addresses[0].email_address,
+//       name: first_name + " " + last_name,
+//       image: image_url
+//     };
+
+//     await User.create(userData);
+//   }
+// );
+
+// //Inngest Function to delete user from database
+// const syncUserDeletiion = inngest.createFunction(
+//   { id: "delete-user-from-clerk" },
+//   { event: "clerk/user.deleted" },
+//   async ({ event }) => {
+
+//     const { id } = event.data;
+//     await User.findByIdAndDelete(id);
+
+//   }
+// );
+
+// //Inngest Function to update user data in database
+// const syncUserUpdation = inngest.createFunction(
+//   { id: "update-user-from-clerk" },
+//   { event: "clerk/user.updated" },
+//   async ({ event }) => {
+
+//     const { id, first_name, last_name, email_addresses, image_url } = event.data;
+
+//     const userData = {
+//       _id: id, // Clerk user id
+//       email: email_addresses?.[0]?.email_address,
+//       name: first_name + " " + last_name,
+//       image: image_url
+//     };
+
+//     await User.findByIdAndUpdate(id, userData);
+//   }
+// );
+
+// // Inngest Function to cancel booking and release seats of show after 10 minutes of booking created if payment is not made
+
+// const releaseSeatsAndDeleteBooking = inngest.createFunction(
+//   { id: "release-seats-delete-booking" },
+//   { event: "app/checkpayment" },
+//   async ({ event, step }) => {
+//     const tenMinutesLater = new Date(Date.now() + 10 * 60 * 1000);
+//     await step.sleepUntil("wait-for-10-minutes", tenMinutesLater);
+
+//   await step.run("check-payment-status", async () => {
+//   const bookingId = event.data.bookingId;
+//   const booking = await Booking.findById(bookingId);
+
+//   // If payment is not made, release seats and delete booking
+//   if (!booking.isPaid) {
+//     const show = await Show.findById(booking.show);
+//     booking.bookedSeats.forEach((seat) => {
+//       delete show.occupiedSeats[seat];
+//     });
+//     show.markModified("occupiedSeats");
+//     await show.save();
+//     await Booking.findByIdAndDelete(booking._id);
+//   }
+// });
+
+//   }
+// );
+
+// // Inngest Function to send email when user books a show
+// const sendBookingConfirmationEmail = inngest.createFunction(
+//   { id: "send-booking-confirmation-email" },
+//   { event: "app/show.booked" },
+//   async ({ event, step }) => {
+//     const { bookingId } = event.data;
+
+//     const booking = await Booking.findById(bookingId).populate({
+//       path: "show",
+//       populate: { path: "movie", model: "Movie" }
+//     }).populate("user");
+
+    
+//     await sendEmail({
+//       to: booking.user.email,
+//       subject: `Payment confirmation: "${booking.show.movie.title}" booked!`,
+//       body: `
+//         <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+//           <h2>Hi ${booking.user.name},</h2>
+
+//           <p>
+//             Your booking for
+//             <strong style="color: #F84565;">
+//               "${booking.show.movie.title}"
+//             </strong>
+//             is confirmed.
+//           </p>
+
+//           <p>
+//             <strong>Date:</strong>
+//             ${new Date(booking.show.showDateTime).toLocaleDateString('en-US', {
+//               timeZone: 'Asia/Kolkata'
+//             })}<br/>
+
+//             <strong>Time:</strong>
+//             ${new Date(booking.show.showDateTime).toLocaleTimeString('en-US', {
+//               timeZone: 'Asia/Kolkata'
+//             })}
+//           </p>
+
+//           <p>Enjoy the show! 🍿</p>
+//           <p>Thanks for booking with us!<br/>– QuickShow Team</p>
+//         </div>
+//       `
+//     });
+//   }
+// );
+
+
+
+
+// // Create an empty array where we'll export future Inngest functions
+// export const functions = [
+//     syncUserCreation, 
+//     syncUserDeletiion,
+//     syncUserUpdation,
+//     releaseSeatsAndDeleteBooking,
+//     sendBookingConfirmationEmail
+// ];
+
 import { Inngest } from "inngest";
 import Show from "../models/Show.js";
 import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import sendEmail from "../config/nodeMailer.js";
 
-
-
-// Create a client to send and receive events
-export const inngest = new Inngest({ 
+// Create Inngest client
+export const inngest = new Inngest({
   id: "my-app",
+  eventKey: process.env.INNGEST_EVENT_KEY,
+});
 
-  eventKey: process.env.INNGEST_EVENT_KEY,});
 
+// ================================
+// 👤 USER SYNC FROM CLERK
+// ================================
 
-//ingest function to user data to a database
-
+// User created
 const syncUserCreation = inngest.createFunction(
   { id: "sync-user-from-clerk" },
   { event: "clerk/user.created" },
@@ -22,88 +177,98 @@ const syncUserCreation = inngest.createFunction(
     const { id, first_name, last_name, email_addresses, image_url } = event.data;
 
     const userData = {
-      _id: id, // Clerk user id
-      email: email_addresses[0].email_address,
-      name: first_name + " " + last_name,
-      image: image_url
+      _id: id, // Clerk user ID
+      email: email_addresses?.[0]?.email_address,
+      name: [first_name, last_name].filter(Boolean).join(" "),
+      image: image_url,
     };
 
     await User.create(userData);
   }
 );
 
-//Inngest Function to delete user from database
-const syncUserDeletiion = inngest.createFunction(
+// User deleted
+const syncUserDeletion = inngest.createFunction(
   { id: "delete-user-from-clerk" },
   { event: "clerk/user.deleted" },
   async ({ event }) => {
-
     const { id } = event.data;
     await User.findByIdAndDelete(id);
-
   }
 );
 
-//Inngest Function to update user data in database
+// User updated
 const syncUserUpdation = inngest.createFunction(
   { id: "update-user-from-clerk" },
   { event: "clerk/user.updated" },
   async ({ event }) => {
-
     const { id, first_name, last_name, email_addresses, image_url } = event.data;
 
     const userData = {
-      _id: id, // Clerk user id
       email: email_addresses?.[0]?.email_address,
-      name: first_name + " " + last_name,
-      image: image_url
+      name: [first_name, last_name].filter(Boolean).join(" "),
+      image: image_url,
     };
 
     await User.findByIdAndUpdate(id, userData);
   }
 );
 
-// Inngest Function to cancel booking and release seats of show after 10 minutes of booking created if payment is not made
+
+// ================================
+// 🎟️ RELEASE SEATS IF PAYMENT FAILS
+// ================================
 
 const releaseSeatsAndDeleteBooking = inngest.createFunction(
   { id: "release-seats-delete-booking" },
   { event: "app/checkpayment" },
   async ({ event, step }) => {
-    const tenMinutesLater = new Date(Date.now() + 10 * 60 * 1000);
-    await step.sleepUntil("wait-for-10-minutes", tenMinutesLater);
+    // wait 10 minutes
+    await step.sleepUntil(
+      "wait-for-10-minutes",
+      new Date(Date.now() + 10 * 60 * 1000)
+    );
 
-  await step.run("check-payment-status", async () => {
-  const bookingId = event.data.bookingId;
-  const booking = await Booking.findById(bookingId);
+    await step.run("check-payment-status", async () => {
+      const booking = await Booking.findById(event.data.bookingId);
 
-  // If payment is not made, release seats and delete booking
-  if (!booking.isPaid) {
-    const show = await Show.findById(booking.show);
-    booking.bookedSeats.forEach((seat) => {
-      delete show.occupiedSeats[seat];
+      // Booking already paid or deleted
+      if (!booking || booking.isPaid) return;
+
+      const show = await Show.findById(booking.show);
+      if (!show) return;
+
+      booking.bookedSeats.forEach(seat => {
+        delete show.occupiedSeats[seat];
+      });
+
+      show.markModified("occupiedSeats");
+      await show.save();
+      await Booking.findByIdAndDelete(booking._id);
     });
-    show.markModified("occupiedSeats");
-    await show.save();
-    await Booking.findByIdAndDelete(booking._id);
-  }
-});
-
   }
 );
 
-// Inngest Function to send email when user books a show
+
+// ================================
+// 📧 BOOKING CONFIRMATION EMAIL
+// ================================
+
 const sendBookingConfirmationEmail = inngest.createFunction(
   { id: "send-booking-confirmation-email" },
   { event: "app/show.booked" },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const { bookingId } = event.data;
 
-    const booking = await Booking.findById(bookingId).populate({
-      path: "show",
-      populate: { path: "movie", model: "Movie" }
-    }).populate("user");
+    const booking = await Booking.findById(bookingId)
+      .populate({
+        path: "show",
+        populate: { path: "movie", model: "Movie" },
+      })
+      .populate("user");
 
-    
+    if (!booking) return;
+
     await sendEmail({
       to: booking.user.email,
       subject: `Payment confirmation: "${booking.show.movie.title}" booked!`,
@@ -121,32 +286,36 @@ const sendBookingConfirmationEmail = inngest.createFunction(
 
           <p>
             <strong>Date:</strong>
-            ${new Date(booking.show.showDateTime).toLocaleDateString('en-US', {
-              timeZone: 'Asia/Kolkata'
+            ${new Date(booking.show.showDateTime).toLocaleDateString("en-US", {
+              timeZone: "Asia/Kolkata",
             })}<br/>
 
             <strong>Time:</strong>
-            ${new Date(booking.show.showDateTime).toLocaleTimeString('en-US', {
-              timeZone: 'Asia/Kolkata'
+            ${new Date(booking.show.showDateTime).toLocaleTimeString("en-US", {
+              timeZone: "Asia/Kolkata",
             })}
           </p>
 
           <p>Enjoy the show! 🍿</p>
-          <p>Thanks for booking with us!<br/>– QuickShow Team</p>
+          <p>
+            Thanks for booking with us!<br/>
+            – QuickShow Team
+          </p>
         </div>
-      `
+      `,
     });
   }
 );
 
 
+// ================================
+// 📦 EXPORT ALL FUNCTIONS
+// ================================
 
-
-// Create an empty array where we'll export future Inngest functions
 export const functions = [
-    syncUserCreation, 
-    syncUserDeletiion,
-    syncUserUpdation,
-    releaseSeatsAndDeleteBooking,
-    sendBookingConfirmationEmail
+  syncUserCreation,
+  syncUserDeletion,
+  syncUserUpdation,
+  releaseSeatsAndDeleteBooking,
+  sendBookingConfirmationEmail,
 ];
