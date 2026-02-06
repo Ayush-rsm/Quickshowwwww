@@ -32,15 +32,16 @@
 //                 paymentLink: ""
 //             })
 
-//             break;
-//         }
-        
 //         // Send Confirmation Email
 
 //         await inngest.send({
 //           name: "app/show.booked",
 //           data: {bookingId}
 //         })
+
+//          break;
+
+//       }
     
 //         default:
 //             console.log('Unhandled event type:', event.type)
@@ -163,7 +164,10 @@
 // //     console.error("Webhook processing error:", err);
 // //     res.status(500).send("Internal Server Error");
 // //   }
-// // };
+// // // };
+
+
+
 import Stripe from "stripe";
 import Booking from "../models/Booking.js";
 import { inngest } from "../inngest/index.js";
