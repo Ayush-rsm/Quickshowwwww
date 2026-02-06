@@ -1,10 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
-
 import express from "express";
 import cors from "cors";
-
-
 import connectDB from "./config/db.js";
 import { clerkMiddleware } from '@clerk/express'
 import { serve } from "inngest/express";
@@ -18,9 +15,6 @@ import stripeRouter from "./routes/stripeRoutes.js";
 
 dotenv.config();
 
-console.log("STRIPE KEY:", process.env.STRIPE_SECRET_KEY);
-
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -32,7 +26,6 @@ app.use('/api/stripe', stripeRouter);
 // Middleware
 app.use(express.json());
 app.use(cors());
-
 app.use(clerkMiddleware())
 
 // API Routes

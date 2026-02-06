@@ -360,35 +360,33 @@ const sendShowReaminders = inngest.createFunction(
           to: task.userEmail,
           subject: `Reminder: Your movie "${task.movieTitle}" starts soon!`,
           body: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-          <h2>Hi ${booking.user.name},</h2>
+<div style="font-family: Arial, sans-serif; line-height: 1.5;">
+  <h2>Hi ${task.userName},</h2>
 
-          <p>
-            Your booking for
-            <strong style="color: #F84565;">
-              "${booking.show.movie.title}"
-            </strong>
-            is confirmed.
-          </p>
+  <p>
+    This is a reminder that your movie
+    <strong style="color: #F84565;">
+      "${task.movieTitle}"
+    </strong>
+    is starting soon.
+  </p>
 
-          <p>
-            <strong>Date:</strong>
-            ${new Date(booking.show.showDateTime).toLocaleDateString("en-US", {
-            timeZone: "Asia/Kolkata",
-          })}<br/>
-
-            <strong>Time:</strong>
-            ${new Date(booking.show.showDateTime).toLocaleTimeString("en-US", {
+  <p>
+    <strong>Show Time:</strong>
+    ${new Date(task.showTime).toLocaleString("en-US", {
             timeZone: "Asia/Kolkata",
           })}
-          </p>
+  </p>
 
-          <p>Enjoy the show! 🍿</p>
-          <p>
-            Thanks for booking with us!<br/>
-            – QuickShow Team
-          </p>
-        </div>`
+  <p>Enjoy the show! 🍿</p>
+
+  <p>
+    Thanks,<br/>
+    QuickShow Team
+  </p>
+</div>
+`
+
         }))
       )
     })
@@ -439,7 +437,7 @@ const sendNewShowNotifications = inngest.createFunction(
         body,
       })
     }
-    return {message: "Notification sent."}
+    return { message: "Notification sent." }
   }
 );
 
