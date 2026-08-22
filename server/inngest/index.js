@@ -164,6 +164,15 @@ export const inngest = new Inngest({
   eventKey: process.env.INNGEST_EVENT_KEY,
 });
 
+// 🛡️ Safe wrapper — Inngest event fail ho to bhi app crash nahi hoga
+export const safeSend = async (payload) => {
+  try {
+    await inngest.send(payload);
+  } catch (err) {
+    console.warn("⚠️ Inngest send skipped:", err.message);
+  }
+};
+
 
 // ================================
 // 👤 USER SYNC FROM CLERK
@@ -193,7 +202,7 @@ const syncUserDeletion = inngest.createFunction(
   { event: "clerk/user.deleted" },
   async ({ event }) => {
     const { id } = event.data;
-    await User.findByIdAndDelete(id);
+    await User.findOneAndDelete({ _id: id }); // ✅ CORRECT
   }
 );
 
@@ -210,7 +219,12 @@ const syncUserUpdation = inngest.createFunction(
       image: image_url,
     };
 
-    await User.findByIdAndUpdate(id, userData);
+    await User.findOneAndUpdate(
+      { _id: id },   // string Clerk ID
+      userData,
+      { new: true }
+    );
+
   }
 );
 

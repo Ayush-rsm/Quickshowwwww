@@ -4,6 +4,7 @@ export const protectAdmin = async (req, res, next) => {
   try {
     const { userId } = req.auth();
 
+    console.log("🔐 [protectAdmin] userId:", userId);
 
     if (!userId) {
       return res.status(401).json({
@@ -13,6 +14,8 @@ export const protectAdmin = async (req, res, next) => {
     }
 
     const user = await clerkClient.users.getUser(userId);
+
+    console.log("🔐 [protectAdmin] privateMetadata:", user.privateMetadata);
 
     if (user.privateMetadata?.role !== "admin") {
       return res.status(403).json({
