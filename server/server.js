@@ -17,22 +17,43 @@ const port = process.env.PORT || 3000;
 
 await connectDB();
 
+// CORS and Private Network Access (PNA) Preflight Handling
+app.use(
+  cors({
+    origin: (origin, callback) => callback(null, true),
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+  })
+);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin");
+
+  if (req.headers["access-control-request-private-network"]) {
+    res.header("Access-Control-Allow-Private-Network", "true");
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  next();
+});
+
 // Stripe Webhooks Route (raw body parser used inside route)
 app.use("/api/stripe", stripeRouter);
 
 // Middleware
 app.use(express.json());
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Private-Network", "true");
-  next();
-});
 app.use(clerkMiddleware());
+
 
 
 // Inngest Endpoint
