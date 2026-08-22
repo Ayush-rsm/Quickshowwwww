@@ -322,22 +322,21 @@ const sendBookingConfirmationEmail = inngest.createFunction(
 );
 
 
-// Inngest Functions to send remainders
-const sendShowReaminders = inngest.createFunction(
-  { id: "send-show-remainders" },
+// Inngest Functions to send reminders
+const sendShowReminders = inngest.createFunction(
+  { id: "send-show-reminders" },
   { cron: "0 */8 * * *" }, // Every 8 hours
   async ({ step }) => {
     const now = new Date();
-    const in8Hours = new Date(now.getTime() + 8 * 60 * 60 * 1000)
+    const in8Hours = new Date(now.getTime() + 8 * 60 * 60 * 1000);
     const windowStart = new Date(in8Hours.getTime() - 10 * 60 * 1000);
 
-    // Prepare remainder tasks
-
+    // Prepare reminder tasks
     const reminderTasks = await step.run(
       "prepare-reminder-tasks",
       async () => {
         const shows = await Show.find({
-          showTime: { $gte: windowStart, $lte: in8Hours },
+          showDateTime: { $gte: windowStart, $lte: in8Hours },
         }).populate("movie");
 
         const tasks = [];
@@ -356,24 +355,26 @@ const sendShowReaminders = inngest.createFunction(
               userEmail: user.email,
               userName: user.name,
               movieTitle: show.movie.title,
-              showTime: show.showTime,
-            })
+              showDateTime: show.showDateTime,
+            });
           }
         }
         return tasks;
       }
-    )
-    if (reminderTasks.length == 0) {
-      return { sent: 0, message: "No reminders to send." }
+    );
+
+    if (reminderTasks.length === 0) {
+      return { sent: 0, message: "No reminders to send." };
     }
 
     // Send reminder emails
-    const results = await step.run('send-all-reminders', async () => {
+    const results = await step.run("send-all-reminders", async () => {
       return await Promise.allSettled(
-        reminderTasks.map(task => sendEmail({
-          to: task.userEmail,
-          subject: `Reminder: Your movie "${task.movieTitle}" starts soon!`,
-          body: `
+        reminderTasks.map((task) =>
+          sendEmail({
+            to: task.userEmail,
+            subject: `Reminder: Your movie "${task.movieTitle}" starts soon!`,
+            body: `
 <div style="font-family: Arial, sans-serif; line-height: 1.5;">
   <h2>Hi ${task.userName},</h2>
 
@@ -387,9 +388,9 @@ const sendShowReaminders = inngest.createFunction(
 
   <p>
     <strong>Show Time:</strong>
-    ${new Date(task.showTime).toLocaleString("en-US", {
-            timeZone: "Asia/Kolkata",
-          })}
+    ${new Date(task.showDateTime).toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    })}
   </p>
 
   <p>Enjoy the show! 🍿</p>
@@ -399,22 +400,22 @@ const sendShowReaminders = inngest.createFunction(
     QuickShow Team
   </p>
 </div>
-`
+`,
+          })
+        )
+      );
+    });
 
-        }))
-      )
-    })
-
-    const sent = results.filter(r => r.status === "fulfilled").length;
+    const sent = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.length - sent;
 
     return {
       sent,
       failed,
-      message: `Sent ${sent} reminders(s), ${failed} failed.`
-    }
+      message: `Sent ${sent} reminder(s), ${failed} failed.`,
+    };
   }
-)
+);
 
 // Inngest Function to send notifications when a new show is added
 const sendNewShowNotifications = inngest.createFunction(
@@ -449,13 +450,11 @@ const sendNewShowNotifications = inngest.createFunction(
         to: userEmail,
         subject,
         body,
-      })
+      });
     }
-    return { message: "Notification sent." }
+    return { message: "Notification sent." };
   }
 );
-
-
 
 // ================================
 // 📦 EXPORT ALL FUNCTIONS
@@ -467,6 +466,7 @@ export const functions = [
   syncUserUpdation,
   releaseSeatsAndDeleteBooking,
   sendBookingConfirmationEmail,
-  sendShowReaminders,
-  sendNewShowNotifications
+  sendShowReminders,
+  sendNewShowNotifications,
 ];
+

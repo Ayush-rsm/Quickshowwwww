@@ -17,7 +17,7 @@ const movieSchema = new mongoose.Schema(
     vote_average: { type: Number, required: true },
     runtime: { type: Number, required: true },
   },
-  { timestamps: true }
+  { _id: false, timestamps: true }
 );
 
 

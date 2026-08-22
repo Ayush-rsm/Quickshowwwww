@@ -55,26 +55,31 @@ export const isAdmin = async (req, res) => {
 // };
 export const getDashboardData = async (req, res) => {
   try {
-    const allShows = await Show.find();
-    console.log("TOTAL SHOWS IN DB:", allShows.length);
+    const bookings = await Booking.find({ isPaid: true });
 
-    const activeShows = await Show.find().populate("movie");
-    console.log("ACTIVE SHOWS SENT:", activeShows.length);
+    const activeShows = await Show.find({
+      showDateTime: { $gte: new Date() },
+    }).populate("movie");
 
-    res.json({
-      success: true,
-      dashboardData: {
-        totalBookings: 0,
-        totalRevenue: 0,
-        activeShows,
-        totalUser: 0
-      }
-    });
+    const totalUser = await User.countDocuments();
+
+    const dashboardData = {
+      totalBookings: bookings.length,
+      totalRevenue: bookings.reduce(
+        (acc, booking) => acc + (booking.amount || 0),
+        0
+      ),
+      activeShows,
+      totalUser,
+    };
+
+    res.json({ success: true, dashboardData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 // API to get all shows

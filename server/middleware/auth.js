@@ -34,3 +34,26 @@ export const protectAdmin = async (req, res, next) => {
     });
   }
 };
+
+export const protectUser = async (req, res, next) => {
+  try {
+    const { userId } = req.auth();
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("User auth error:", error);
+
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+};
+
