@@ -3,18 +3,16 @@
     {
       "name": "Default",
       "files": [
-        "server/.env",
-        "server/config/db.js",
-        "server/controllers/bookingController.js",
-        "server/inngest/index.js",
-        "server/middleware/auth.js",
+        "server/server.js",
+        ".vscode/changelists.json",
+        "client/public/backgroundImage.png",
         "server/package-lock.json",
         "server/package.json",
-        "server/routes/adminRoutes.js",
-        ".vscode/changelists.json",
-        "\"client/public/WhatsApp Image 2024-08-03 at 00.28.18.jpeg\"",
-        "server/controllers/showController.js",
-        "server/server.js"
+        "client/public/123.png",
+        "client/public/234.png",
+        "client/public/backgroundImage.jpg",
+        "client/src/components/HeroSection.jsx",
+        "client/public/345.jpg"
       ]
     }
   ],

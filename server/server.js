@@ -17,7 +17,6 @@ const port = process.env.PORT || 3000;
 
 await connectDB();
 
-// CORS and Private Network Access (PNA) Preflight Handling
 app.use(
   cors({
     origin: (origin, callback) => callback(null, true),
@@ -47,19 +46,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Stripe Webhooks Route (raw body parser used inside route)
+
 app.use("/api/stripe", stripeRouter);
 
-// Middleware
 app.use(express.json());
 app.use(clerkMiddleware());
 
 
 
-// Inngest Endpoint
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
-// API Routes
 app.get("/", (req, res) => {
   res.send("Server is Live!");
 });
